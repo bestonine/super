@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="./assets/img/Aero Plane Crash Video Game Logo.svg">
+<title>Play VELOCITY CRASH - In-Browser Racing Game</title>
+<meta name="description" content="Launch VELOCITY CRASH and start racing instantly. Experience high-speed action and realistic physics directly in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  body { margin:0; background:#111827; color:#fff; font-family:'Inter',sans-serif; }
+  canvas { display:block; margin:60px auto; background:#1b1f29; border:4px solid #222832; }
+  h1 { text-align:center; margin-top:20px; }
+  p { text-align:center; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="logo" href="index.html" aria-label="Home"><img src="assets/img/Aero Plane Crash Video Game Logo.svg" alt="VELOCITY CRASH icon"><span>VELOCITY CRASH</span></a>
+    <div class="menu" data-nav-menu>
+      <a href="index.html">Home</a>
+      <a href="game.html" style='opacity:1;font-weight:800'>Play Game</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="about.html">About</a>
+      <a href="blog.html">Blog</a>
+      <a href="faq.html">FAQ</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+    </div>
+    <div class="right"><a class="btn ghost" data-nav-toggle>Menu</a><a class="btn" href="game.html">Play Now</a></div>
+  </div>
+</nav>
+
+<h1>VELOCITY CRASH</h1>
+<p>Use Up/Down arrows to control your vehicle and dodge obstacles.</p>
+<canvas id="pong" width="800" height="500"></canvas>
+
+<script>
+(function(){
+  const canvas = document.getElementById('pong');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Player airplane
+  const plane = { x:60, y:H/2-20, w:50, h:30, dy:0, score:0 };
+  // Obstacles array
+  const obstacles = [];
+  let gameOver = false;
+  let frame = 0;
+
+  function drawPlane(){
+    ctx.fillStyle = "#3B82F6";
+    ctx.beginPath();
+    ctx.moveTo(plane.x, plane.y + plane.h/2);
+    ctx.lineTo(plane.x + plane.w, plane.y);
+    ctx.lineTo(plane.x + plane.w, plane.y + plane.h);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function addObstacle(){
+    const gap = 150;
+    const topHeight = Math.random() * (H - gap - 80) + 40;
+    obstacles.push({
+      x: W,
+      w: 40,
+      top: topHeight,
+      bottom: topHeight + gap
+    });
+  }
+
+  function update(){
+    plane.y += plane.dy;
+    if(plane.y<0) plane.y = 0;
+    if(plane.y+plane.h>H) plane.y = H - plane.h;
+
+    // Add obstacles periodically
+    frame++;
+    if(frame % 90 === 0) addObstacle();
+
+    // Move & check obstacles
+    for(let i=obstacles.length-1; i>=0; i--){
+      const ob = obstacles[i];
+      ob.x -= 4;
+
+      // Collision check
+      if(plane.x + plane.w > ob.x && plane.x < ob.x + ob.w){
+        if(plane.y < ob.top || plane.y + plane.h > ob.bottom){
+          gameOver = true;
+        }
+      }
+
+      // Passed obstacle
+      if(ob.x + ob.w < plane.x && !ob.passed){
+        ob.passed = true;
+        plane.score++;
+      }
+
+      // Remove off-screen
+      if(ob.x + ob.w < 0) obstacles.splice(i,1);
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "#1b1f29";
+    ctx.fillRect(0,0,W,H);
+
+    // Obstacles
+    ctx.fillStyle = "#EF4444";
+    obstacles.forEach(ob=>{
+      ctx.fillRect(ob.x,0,ob.w,ob.top);
+      ctx.fillRect(ob.x,ob.bottom,ob.w,H-ob.bottom);
+    });
+
+    // Plane
+    drawPlane();
+
+    // Score
+    ctx.fillStyle="#fff";
+    ctx.font="24px Inter";
+    ctx.fillText("Score: "+plane.score, 20, 40);
+  }
+
+  function loop(){
+    if(!gameOver){
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    } else {
+      ctx.fillStyle="#fff";
+      ctx.font="32px Inter";
+      ctx.textAlign="center";
+      ctx.fillText("Game Over! Score: " + plane.score, W/2, H/2);
+    }
+  }
+  loop();
+
+  window.addEventListener('keydown', e=>{
+    if(e.key === "ArrowUp") plane.dy = -6;
+    if(e.key === "ArrowDown") plane.dy = 6;
+  });
+  window.addEventListener('keyup', e=>{
+    if(e.key === "ArrowUp" || e.key === "ArrowDown") plane.dy = 0;
+  });
+})();
+</script>
+</body>
+</html>
